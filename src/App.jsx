@@ -64,6 +64,7 @@ function App() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
+          <img src="/logo.png" alt="Logo" style={{ width: '120px', height: '120px', marginBottom: '1rem', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))' }} />
           <h1>On Mange Quoi Ce Soir</h1>
           <p>Découvrez des recettes magiques avec ce que vous avez au frigo</p>
         </motion.div>
