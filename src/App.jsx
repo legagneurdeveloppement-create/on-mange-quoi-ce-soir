@@ -10,6 +10,16 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [magicRecipe, setMagicRecipe] = useState(null);
+  const [customIngredients, setCustomIngredients] = useState(() => {
+    const saved = localStorage.getItem('customIngredients');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const allIngredients = [...ingredients, ...customIngredients];
+
+  useEffect(() => {
+    localStorage.setItem('customIngredients', JSON.stringify(customIngredients));
+  }, [customIngredients]);
 
   const toggleIngredient = (id) => {
     setSelectedIngredients(prev => {
@@ -65,7 +75,7 @@ function App() {
     
     // Simulate AI generation time
     setTimeout(() => {
-      const selectedNames = selectedIds.map(id => ingredients.find(ing => ing.id === id).name);
+      const selectedNames = selectedIds.map(id => allIngredients.find(ing => ing.id === id).name);
       const mainIng = selectedNames[0];
       const secondIng = selectedNames[1];
       
@@ -99,7 +109,29 @@ function App() {
     }, 2000);
   };
 
-  const filteredIngredients = ingredients.filter(ing => 
+  const addCustomIngredient = () => {
+    if (!searchQuery.trim()) return;
+    
+    const newId = searchQuery.toLowerCase().replace(/\s+/g, '-');
+    if (allIngredients.find(ing => ing.id === newId)) {
+      alert("Cet ingrédient existe déjà !");
+      return;
+    }
+
+    const newIng = {
+      id: newId,
+      name: searchQuery.trim(),
+      icon: '📦', // Generic icon for custom items
+      category: 'Divers',
+      unit: 'pce'
+    };
+
+    setCustomIngredients(prev => [...prev, newIng]);
+    toggleIngredient(newId);
+    setSearchQuery('');
+  };
+
+  const filteredIngredients = allIngredients.filter(ing => 
     ing.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -171,6 +203,19 @@ function App() {
                   )}
                 </motion.div>
               ))}
+
+              {filteredIngredients.length === 0 && searchQuery && (
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="ingredient-card glass"
+                  style={{ border: '2px dashed var(--primary)', background: 'rgba(255, 107, 53, 0.05)' }}
+                  onClick={addCustomIngredient}
+                >
+                  <span className="ingredient-icon">➕</span>
+                  <span style={{ fontWeight: 600, display: 'block' }}>Ajouter "{searchQuery}"</span>
+                </motion.div>
+              )}
             </div>
           </div>
         </section>
