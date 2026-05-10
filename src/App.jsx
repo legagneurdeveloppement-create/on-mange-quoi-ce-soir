@@ -112,7 +112,15 @@ function App() {
   const addCustomIngredient = () => {
     if (!searchQuery.trim()) return;
     
-    const newId = searchQuery.toLowerCase().replace(/\s+/g, '-');
+    const emojiMap = {
+      'courgette': '🥒', 'poivron': '🫑', 'broccoli': '🥦', 'maïs': '🌽',
+      'champignon': '🍄', 'aubergine': '🍆', 'avocat': '🥑', 'piment': '🌶️',
+      'concombre': '🥒', 'salade': '🥗', 'fraise': '🍓', 'pomme': '🍎',
+      'poire': '🍐', 'banane': '🍌', 'citron': '🍋', 'orange': '🍊'
+    };
+
+    const name = searchQuery.trim().toLowerCase();
+    const newId = name.replace(/\s+/g, '-');
     if (allIngredients.find(ing => ing.id === newId)) {
       alert("Cet ingrédient existe déjà !");
       return;
@@ -121,7 +129,7 @@ function App() {
     const newIng = {
       id: newId,
       name: searchQuery.trim(),
-      icon: '📦', // Generic icon for custom items
+      icon: emojiMap[name] || '📦',
       category: 'Divers',
       unit: 'pce'
     };
@@ -129,6 +137,16 @@ function App() {
     setCustomIngredients(prev => [...prev, newIng]);
     toggleIngredient(newId);
     setSearchQuery('');
+  };
+
+  const removeCustomIngredient = (e, id) => {
+    e.stopPropagation();
+    setCustomIngredients(prev => prev.filter(ing => ing.id !== id));
+    setSelectedIngredients(prev => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
   };
 
   const filteredIngredients = allIngredients.filter(ing => 
@@ -190,7 +208,22 @@ function App() {
                   whileHover={{ scale: 1.02 }}
                   className={`ingredient-card glass ${selectedIngredients[ing.id] ? 'selected' : ''}`}
                   onClick={() => toggleIngredient(ing.id)}
+                  style={{ position: 'relative' }}
                 >
+                  {customIngredients.find(ci => ci.id === ing.id) && (
+                    <button 
+                      onClick={(e) => removeCustomIngredient(e, ing.id)}
+                      style={{ 
+                        position: 'absolute', top: '5px', right: '5px', 
+                        background: 'rgba(0,0,0,0.1)', border: 'none', 
+                        borderRadius: '50%', width: '20px', height: '20px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '10px', cursor: 'pointer', color: 'white'
+                      }}
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
                   <span className="ingredient-icon">{ing.icon}</span>
                   <span style={{ fontWeight: 600, display: 'block' }}>{ing.name}</span>
 
