@@ -239,8 +239,7 @@ function App() {
                       <X size={12} />
                     </button>
                   )}
-                  <span className="ingredient-icon">{ing.icon}</span>
-                  <span style={{ fontWeight: 600, display: 'block' }}>{ing.name}</span>
+                  <span style={{ fontWeight: 600, display: 'block', fontSize: '1.1rem', margin: '0.5rem 0' }}>{ing.name}</span>
 
                   {selectedIngredients[ing.id] && (
                     <div className="quantity-controls fade-in" onClick={(e) => e.stopPropagation()}>
@@ -257,11 +256,10 @@ function App() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   className="ingredient-card glass"
-                  style={{ border: '2px dashed var(--primary)', background: 'rgba(255, 107, 53, 0.05)' }}
+                  style={{ border: '2px dashed var(--primary)', background: 'rgba(255, 107, 53, 0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   onClick={addCustomIngredient}
                 >
-                  <span className="ingredient-icon">➕</span>
-                  <span style={{ fontWeight: 600, display: 'block' }}>Ajouter "{searchQuery}"</span>
+                  <span style={{ fontWeight: 600, display: 'block', textAlign: 'center' }}>Ajouter "{searchQuery}"</span>
                 </motion.div>
               )}
             </div>
