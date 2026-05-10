@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, ChefHat, Clock, Flame, X, Check, UtensilsCrossed } from 'lucide-react';
+import { Search, ChefHat, Clock, Flame, X, Check, UtensilsCrossed, HelpCircle } from 'lucide-react';
 import { ingredients, recipes } from './data/recipes';
 
 function App() {
@@ -10,6 +10,7 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [magicRecipe, setMagicRecipe] = useState(null);
+  const [showHelp, setShowHelp] = useState(false);
   const [customIngredients, setCustomIngredients] = useState(() => {
     const saved = localStorage.getItem('customIngredients');
     return saved ? JSON.parse(saved) : [];
@@ -160,7 +161,21 @@ function App() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
+          style={{ position: 'relative' }}
         >
+          <button 
+            onClick={() => setShowHelp(true)}
+            style={{ 
+              position: 'absolute', top: '-2rem', right: '1rem', 
+              background: 'rgba(255,255,255,0.2)', border: 'none', 
+              borderRadius: '50%', width: '40px', height: '40px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', color: 'white', backdropFilter: 'blur(5px)'
+            }}
+            title="Mode d'emploi"
+          >
+            <HelpCircle size={24} />
+          </button>
           <img src="/logo.png" alt="Logo" style={{ width: '120px', height: '120px', marginBottom: '1rem', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))' }} />
           <h1>On Mange Quoi Ce Soir</h1>
           <p>Découvrez des recettes magiques avec ce que vous avez au frigo</p>
@@ -396,6 +411,78 @@ function App() {
                   </div>
                 )}
               </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showHelp && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="modal-overlay"
+            onClick={() => setShowHelp(false)}
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="modal-content"
+              onClick={e => e.stopPropagation()}
+              style={{ padding: '3rem', maxWidth: '600px' }}
+            >
+              <button className="close-btn" onClick={() => setShowHelp(false)}>
+                <X size={20} />
+              </button>
+              
+              <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📖</div>
+                <h2>Mode d'Emploi</h2>
+              </div>
+
+              <div className="help-steps" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <div style={{ background: 'var(--primary)', color: 'white', width: '30px', height: '30px', borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>1</div>
+                  <div>
+                    <strong style={{ display: 'block' }}>Remplissez votre frigo</strong>
+                    <p style={{ opacity: 0.8, fontSize: '0.9rem' }}>Sélectionnez les ingrédients que vous avez en cliquant sur les cartes. Vous pouvez aussi rechercher un ingrédient spécifique.</p>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <div style={{ background: 'var(--primary)', color: 'white', width: '30px', height: '30px', borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>2</div>
+                  <div>
+                    <strong style={{ display: 'block' }}>Ajustez les quantités</strong>
+                    <p style={{ opacity: 0.8, fontSize: '0.9rem' }}>Utilisez les boutons + et - sur chaque ingrédient pour indiquer combien vous en avez.</p>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <div style={{ background: 'var(--primary)', color: 'white', width: '30px', height: '30px', borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>3</div>
+                  <div>
+                    <strong style={{ display: 'block' }}>Ajoutez vos propres ingrédients</strong>
+                    <p style={{ opacity: 0.8, fontSize: '0.9rem' }}>Si un ingrédient manque, tapez son nom dans la recherche et cliquez sur "Ajouter". L'appli reconnaîtra même certains emojis !</p>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <div style={{ background: 'var(--primary)', color: 'white', width: '30px', height: '30px', borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>4</div>
+                  <div>
+                    <strong style={{ display: 'block' }}>La Magie du Chef</strong>
+                    <p style={{ opacity: 0.8, fontSize: '0.9rem' }}>Si les recettes suggérées ne vous conviennent pas, cliquez sur le bouton violet <strong>🪄 Magie du Chef</strong> pour générer une recette sur mesure !</p>
+                  </div>
+                </div>
+              </div>
+
+              <button 
+                className="btn btn-primary" 
+                onClick={() => setShowHelp(false)}
+                style={{ width: '100%', marginTop: '2rem' }}
+              >
+                C'est compris !
+              </button>
             </motion.div>
           </motion.div>
         )}
