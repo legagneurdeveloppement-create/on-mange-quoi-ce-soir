@@ -12,7 +12,6 @@
   "dependencies": {
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.14.0",
-    "on-mange-quoi-ce-soir": "file:../../../.gemini/antigravity/scratch/on-mange-quoi-ce-soir",
     "react": "^19.2.5",
     "react-dom": "^19.2.5"
   },
