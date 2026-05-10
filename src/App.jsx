@@ -8,6 +8,8 @@ function App() {
   const [matchingRecipes, setMatchingRecipes] = useState(recipes);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [magicRecipe, setMagicRecipe] = useState(null);
 
   const toggleIngredient = (id) => {
     setSelectedIngredients(prev => {
@@ -51,6 +53,51 @@ function App() {
       setMatchingRecipes(filtered);
     }
   }, [selectedIngredients]);
+
+  const generateMagicRecipe = () => {
+    const selectedIds = Object.keys(selectedIngredients);
+    if (selectedIds.length < 2) {
+      alert("Veuillez sélectionner au moins 2 ingrédients pour la magie du Chef !");
+      return;
+    }
+
+    setIsGenerating(true);
+    
+    // Simulate AI generation time
+    setTimeout(() => {
+      const selectedNames = selectedIds.map(id => ingredients.find(ing => ing.id === id).name);
+      const mainIng = selectedNames[0];
+      const secondIng = selectedNames[1];
+      
+      const titles = [
+        `La Poêlée improvisée de ${mainIng} et ${secondIng}`,
+        `Le Délice de ${mainIng} façon Chef`,
+        `Gratin surprise : ${mainIng} & ${secondIng}`,
+        `Mélange Magique de Saisons`
+      ];
+
+      const magic = {
+        id: 'magic-' + Date.now(),
+        title: titles[Math.floor(Math.random() * titles.length)],
+        ingredients: selectedIds.map(id => ({ id, amount: selectedIngredients[id] })),
+        time: '25 min',
+        difficulty: 'Magique',
+        image: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=80&w=800',
+        instructions: [
+          `Préparez vos ${selectedNames.join(', ')} avec amour.`,
+          `Faites chauffer une poêle avec un filet d'huile ou une noisette de beurre.`,
+          `Ajoutez les ingrédients un à un en commençant par le plus ferme.`,
+          `Laissez mijoter doucement pour que les saveurs se mélangent parfaitement.`,
+          `Servez chaud et savourez votre création unique !`
+        ],
+        isMagic: true
+      };
+
+      setMagicRecipe(magic);
+      setIsGenerating(false);
+      setSelectedRecipe(magic);
+    }, 2000);
+  };
 
   const filteredIngredients = ingredients.filter(ing => 
     ing.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -131,8 +178,24 @@ function App() {
         <section className="recipes-section">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
             <h2>Recettes suggérées ({matchingRecipes.length})</h2>
-            <div style={{ color: 'var(--primary)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <ChefHat /> {Object.keys(selectedIngredients).length} types d'ingrédients
+            <div style={{ color: 'var(--primary)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <ChefHat /> {Object.keys(selectedIngredients).length} ingrédients
+              </div>
+              {Object.keys(selectedIngredients).length >= 2 && (
+                <button 
+                  className="btn btn-primary" 
+                  onClick={generateMagicRecipe}
+                  disabled={isGenerating}
+                  style={{ 
+                    background: 'linear-gradient(135deg, #6366f1, #a855f7)', 
+                    fontSize: '0.8rem',
+                    padding: '0.5rem 1rem'
+                  }}
+                >
+                  {isGenerating ? 'Magie en cours...' : '🪄 Magie du Chef'}
+                </button>
+              )}
             </div>
           </div>
 
@@ -248,6 +311,12 @@ function App() {
                     </ol>
                   </div>
                 </div>
+
+                {selectedRecipe.isMagic && (
+                  <div style={{ marginTop: '2rem', padding: '1rem', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1))', borderRadius: '15px', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
+                    <p style={{ fontStyle: 'italic', color: '#6366f1' }}>✨ Cette recette a été générée spécialement pour vous avec vos ingrédients !</p>
+                  </div>
+                )}
               </div>
             </motion.div>
           </motion.div>
