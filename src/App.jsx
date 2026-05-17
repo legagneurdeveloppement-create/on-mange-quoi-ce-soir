@@ -102,9 +102,21 @@ function App() {
     
     // Simulate AI generation time
     setTimeout(() => {
-      const selectedNames = selectedIds.map(id => allIngredients.find(ing => ing.id === id)?.name || 'Ingrédient mystère');
+      // Mélange aléatoire pour que le plat principal change à chaque fois
+      const shuffledIds = [...selectedIds].sort(() => 0.5 - Math.random());
+      
+      let chosenIds = shuffledIds;
+      // S'il y a plus de 3 ingrédients, 60% de chance de n'en prendre qu'une partie (pour éviter le gloubiboulga)
+      if (selectedIds.length > 3 && Math.random() > 0.4) {
+        // Choisit entre 2 et 5 ingrédients au hasard
+        const maxLimit = Math.min(selectedIds.length - 1, 5);
+        const numToPick = Math.floor(Math.random() * (maxLimit - 2 + 1)) + 2; 
+        chosenIds = shuffledIds.slice(0, numToPick);
+      }
+
+      const selectedNames = chosenIds.map(id => allIngredients.find(ing => ing.id === id)?.name || 'Ingrédient mystère');
       const mainIng = selectedNames[0];
-      const secondIng = selectedNames[1];
+      const secondIng = selectedNames[1] || selectedNames[0]; // Sécurité au cas où il n'y aurait qu'un ingrédient
       
       const recipeTypes = [
         {
@@ -113,7 +125,7 @@ function App() {
             `Lavez et découpez soigneusement : ${selectedNames.join(', ')}.`,
             `Faites chauffer une grande poêle avec un peu de matière grasse.`,
             `Saisissez ${mainIng} à feu vif pendant quelques minutes.`,
-            `Incorporez le reste de vos ingrédients (${secondIng}, etc.) et baissez le feu.`,
+            `Incorporez le reste de vos ingrédients (${selectedNames.length > 2 ? 'légumes, etc.' : secondIng}) et baissez le feu.`,
             `Laissez dorer en remuant régulièrement. Assaisonnez et servez bien chaud !`
           ]
         },
@@ -154,7 +166,7 @@ function App() {
       const magic = {
         id: 'magic-' + Date.now(),
         title: selectedType.title,
-        ingredients: selectedIds.map(id => ({ id, amount: selectedIngredients[id] })),
+        ingredients: chosenIds.map(id => ({ id, amount: selectedIngredients[id] })),
         time: '25 min',
         difficulty: 'Magique',
         image: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=80&w=800',
