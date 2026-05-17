@@ -102,31 +102,63 @@ function App() {
     
     // Simulate AI generation time
     setTimeout(() => {
-      const selectedNames = selectedIds.map(id => allIngredients.find(ing => ing.id === id).name);
+      const selectedNames = selectedIds.map(id => allIngredients.find(ing => ing.id === id)?.name || 'Ingrédient mystère');
       const mainIng = selectedNames[0];
       const secondIng = selectedNames[1];
       
-      const titles = [
-        `La Poêlée improvisée de ${mainIng} et ${secondIng}`,
-        `Le Délice de ${mainIng} façon Chef`,
-        `Gratin surprise : ${mainIng} & ${secondIng}`,
-        `Mélange Magique de Saisons`
+      const recipeTypes = [
+        {
+          title: `La Poêlée improvisée de ${mainIng} et ${secondIng}`,
+          instructions: [
+            `Lavez et découpez soigneusement : ${selectedNames.join(', ')}.`,
+            `Faites chauffer une grande poêle avec un peu de matière grasse.`,
+            `Saisissez ${mainIng} à feu vif pendant quelques minutes.`,
+            `Incorporez le reste de vos ingrédients (${secondIng}, etc.) et baissez le feu.`,
+            `Laissez dorer en remuant régulièrement. Assaisonnez et servez bien chaud !`
+          ]
+        },
+        {
+          title: `Le Délice de ${mainIng} façon Chef`,
+          instructions: [
+            `Rassemblez sur votre plan de travail : ${selectedNames.join(', ')}.`,
+            `Préparez ${mainIng} pour qu'il soit la star de votre plat.`,
+            `Dans une cocotte ou une sauteuse, faites revenir doucement l'ensemble des ingrédients.`,
+            `Laissez mijoter à feu doux en couvrant pour conserver tout le moelleux.`,
+            `Dressez joliment dans vos plus belles assiettes. Bon appétit !`
+          ]
+        },
+        {
+          title: `Gratin surprise : ${mainIng} & ${secondIng}`,
+          instructions: [
+            `Préchauffez votre four à 180°C (thermostat 6).`,
+            `Coupez ${mainIng} et ${secondIng} en tranches ou en petits dés.`,
+            `Disposez harmonieusement ${selectedNames.join(', ')} dans un plat à gratin.`,
+            `Nappez d'un fond de crème, de sauce ou simplement d'un filet d'huile.`,
+            `Enfournez pour 25 à 30 minutes jusqu'à obtenir une belle coloration !`
+          ]
+        },
+        {
+          title: `Mélange Magique de Saisons`,
+          instructions: [
+            `Triez et préparez vos ingrédients : ${selectedNames.join(', ')}.`,
+            `Dans un grand récipient, commencez par associer ${mainIng} et ${secondIng}.`,
+            `Ajoutez le reste des ingrédients pour créer un équilibre de saveurs et de textures.`,
+            `Préparez un petit assaisonnement de votre choix pour lier le tout.`,
+            `Mélangez bien, laissez reposer quelques minutes pour que les goûts se diffusent, et dégustez !`
+          ]
+        }
       ];
+
+      const selectedType = recipeTypes[Math.floor(Math.random() * recipeTypes.length)];
 
       const magic = {
         id: 'magic-' + Date.now(),
-        title: titles[Math.floor(Math.random() * titles.length)],
+        title: selectedType.title,
         ingredients: selectedIds.map(id => ({ id, amount: selectedIngredients[id] })),
         time: '25 min',
         difficulty: 'Magique',
         image: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=80&w=800',
-        instructions: [
-          `Préparez vos ${selectedNames.join(', ')} avec amour.`,
-          `Faites chauffer une poêle avec un filet d'huile ou une noisette de beurre.`,
-          `Ajoutez les ingrédients un à un en commençant par le plus ferme.`,
-          `Laissez mijoter doucement pour que les saveurs se mélangent parfaitement.`,
-          `Servez chaud et savourez votre création unique !`
-        ],
+        instructions: selectedType.instructions,
         isMagic: true
       };
 
