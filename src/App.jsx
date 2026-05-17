@@ -11,6 +11,7 @@ function App() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [magicRecipe, setMagicRecipe] = useState(null);
   const [showHelp, setShowHelp] = useState(false);
+  const [displayUnits, setDisplayUnits] = useState({});
   const [customIngredients, setCustomIngredients] = useState(() => {
     const saved = localStorage.getItem('customIngredients');
     return saved ? JSON.parse(saved) : [];
@@ -34,10 +35,10 @@ function App() {
     });
   };
 
-  const updateQuantity = (id, delta) => {
+  const updateQuantity = (id, delta, multiplier = 1) => {
     setSelectedIngredients(prev => {
       const current = prev[id] === '' ? 0 : (prev[id] || 0);
-      const newVal = Math.max(0, current + delta);
+      const newVal = Math.max(0, current + (delta * multiplier));
       const newIngredients = { ...prev };
       if (newVal === 0) {
         delete newIngredients[id];
@@ -48,7 +49,7 @@ function App() {
     });
   };
 
-  const handleQuantityChange = (id, value) => {
+  const handleQuantityChange = (id, value, multiplier = 1) => {
     setSelectedIngredients(prev => {
       const newIngredients = { ...prev };
       if (value === '') {
@@ -56,7 +57,7 @@ function App() {
       } else {
         const num = parseFloat(value);
         if (!isNaN(num) && num >= 0) {
-          newIngredients[id] = num;
+          newIngredients[id] = num * multiplier;
         }
       }
       return newIngredients;
@@ -266,24 +267,55 @@ function App() {
                   )}
                   <span style={{ fontWeight: 600, display: 'block', fontSize: '1.1rem', margin: '0.5rem 0' }}>{ing.name}</span>
 
-                  {selectedIngredients[ing.id] !== undefined && (
-                    <div className="quantity-controls fade-in" onClick={(e) => e.stopPropagation()}>
-                      <button onClick={() => updateQuantity(ing.id, -1)}>-</button>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-                        <input 
-                          type="number"
-                          min="0"
-                          step="any"
-                          value={selectedIngredients[ing.id]}
-                          onChange={(e) => handleQuantityChange(ing.id, e.target.value)}
-                          onBlur={() => handleQuantityBlur(ing.id)}
-                          className="quantity-input"
-                        />
-                        <span style={{ minWidth: 'auto' }}>{ing.unit}</span>
+                  {selectedIngredients[ing.id] !== undefined && (() => {
+                    const baseUnit = ing.unit;
+                    const currentDisplayUnit = displayUnits[ing.id] || baseUnit;
+                    const multiplier = (currentDisplayUnit === 'kg' || currentDisplayUnit === 'L') ? 1000 : 1;
+                    const displayValue = selectedIngredients[ing.id] === '' 
+                      ? '' 
+                      : (selectedIngredients[ing.id] / multiplier);
+
+                    return (
+                      <div className="quantity-controls fade-in" onClick={(e) => e.stopPropagation()}>
+                        <button onClick={() => updateQuantity(ing.id, -1, multiplier)}>-</button>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                          <input 
+                            type="number"
+                            min="0"
+                            step="any"
+                            value={displayValue}
+                            onChange={(e) => handleQuantityChange(ing.id, e.target.value, multiplier)}
+                            onBlur={() => handleQuantityBlur(ing.id)}
+                            className="quantity-input"
+                          />
+                          {(baseUnit === 'g' || baseUnit === 'ml') ? (
+                            <select
+                              value={currentDisplayUnit}
+                              onChange={(e) => {
+                                setDisplayUnits(prev => ({ ...prev, [ing.id]: e.target.value }));
+                              }}
+                              className="unit-select"
+                            >
+                              {baseUnit === 'g' ? (
+                                <>
+                                  <option value="g">g</option>
+                                  <option value="kg">kg</option>
+                                </>
+                              ) : (
+                                <>
+                                  <option value="ml">ml</option>
+                                  <option value="L">L</option>
+                                </>
+                              )}
+                            </select>
+                          ) : (
+                            <span style={{ minWidth: 'auto' }}>{baseUnit}</span>
+                          )}
+                        </div>
+                        <button onClick={() => updateQuantity(ing.id, 1, multiplier)}>+</button>
                       </div>
-                      <button onClick={() => updateQuantity(ing.id, 1)}>+</button>
-                    </div>
-                  )}
+                    );
+                  })()}
                 </motion.div>
               ))}
 
