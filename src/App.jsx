@@ -25,7 +25,7 @@ function App() {
   const toggleIngredient = (id) => {
     setSelectedIngredients(prev => {
       const newIngredients = { ...prev };
-      if (newIngredients[id]) {
+      if (newIngredients[id] !== undefined) {
         delete newIngredients[id];
       } else {
         newIngredients[id] = 1;
@@ -36,13 +36,38 @@ function App() {
 
   const updateQuantity = (id, delta) => {
     setSelectedIngredients(prev => {
-      const current = prev[id] || 0;
+      const current = prev[id] === '' ? 0 : (prev[id] || 0);
       const newVal = Math.max(0, current + delta);
       const newIngredients = { ...prev };
       if (newVal === 0) {
         delete newIngredients[id];
       } else {
         newIngredients[id] = newVal;
+      }
+      return newIngredients;
+    });
+  };
+
+  const handleQuantityChange = (id, value) => {
+    setSelectedIngredients(prev => {
+      const newIngredients = { ...prev };
+      if (value === '') {
+        newIngredients[id] = '';
+      } else {
+        const num = parseFloat(value);
+        if (!isNaN(num) && num >= 0) {
+          newIngredients[id] = num;
+        }
+      }
+      return newIngredients;
+    });
+  };
+
+  const handleQuantityBlur = (id) => {
+    setSelectedIngredients(prev => {
+      const newIngredients = { ...prev };
+      if (newIngredients[id] === '' || newIngredients[id] === 0) {
+        delete newIngredients[id];
       }
       return newIngredients;
     });
@@ -221,7 +246,7 @@ function App() {
                 <motion.div
                   key={ing.id}
                   whileHover={{ scale: 1.02 }}
-                  className={`ingredient-card glass ${selectedIngredients[ing.id] ? 'selected' : ''}`}
+                  className={`ingredient-card glass ${selectedIngredients[ing.id] !== undefined ? 'selected' : ''}`}
                   onClick={() => toggleIngredient(ing.id)}
                   style={{ position: 'relative' }}
                 >
@@ -241,10 +266,21 @@ function App() {
                   )}
                   <span style={{ fontWeight: 600, display: 'block', fontSize: '1.1rem', margin: '0.5rem 0' }}>{ing.name}</span>
 
-                  {selectedIngredients[ing.id] && (
+                  {selectedIngredients[ing.id] !== undefined && (
                     <div className="quantity-controls fade-in" onClick={(e) => e.stopPropagation()}>
                       <button onClick={() => updateQuantity(ing.id, -1)}>-</button>
-                      <span>{selectedIngredients[ing.id]} {ing.unit}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                        <input 
+                          type="number"
+                          min="0"
+                          step="any"
+                          value={selectedIngredients[ing.id]}
+                          onChange={(e) => handleQuantityChange(ing.id, e.target.value)}
+                          onBlur={() => handleQuantityBlur(ing.id)}
+                          className="quantity-input"
+                        />
+                        <span style={{ minWidth: 'auto' }}>{ing.unit}</span>
+                      </div>
                       <button onClick={() => updateQuantity(ing.id, 1)}>+</button>
                     </div>
                   )}
