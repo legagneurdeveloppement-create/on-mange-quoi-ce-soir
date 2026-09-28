@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, ChefHat, Clock, Flame, X, Check, UtensilsCrossed, HelpCircle } from 'lucide-react';
+import { Search, ChefHat, Clock, Flame, X, Check, UtensilsCrossed, HelpCircle, Heart, Moon, Sun, FileText, ShoppingCart } from "lucide-react";
 import { ingredients, recipes } from './data/recipes';
 
 function App() {
@@ -16,6 +16,95 @@ function App() {
     const saved = localStorage.getItem('customIngredients');
     return saved ? JSON.parse(saved) : [];
   });
+  // === NOUVEAUX STATES V2 ===
+  const [favorites, setFavorites] = useState(() => {
+    const saved = localStorage.getItem('recipeFavorites');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('darkMode');
+    return saved === 'true';
+  });
+  const [recipeFilter, setRecipeFilter] = useState('all');
+
+  // Effets pour persister
+  useEffect(() => {
+    localStorage.setItem('recipeFavorites', JSON.stringify(favorites));
+  }, [favorites]);
+
+  useEffect(() => {
+    localStorage.setItem('darkMode', String(darkMode));
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
+
+  // === FONCTIONS V2 ===
+  const toggleFavorite = (recipeId) => {
+    setFavorites(prev => {
+      if (prev.includes(recipeId)) {
+        return prev.filter(id => id !== recipeId);
+      }
+      return [...prev, recipeId];
+    });
+  };
+
+  const exportShoppingListToPDF = (recipe) => {
+    if (!recipe) return;
+    if (typeof window.jspdf === 'undefined') {
+      alert('Bibliotheque PDF non chargee.');
+      return;
+    }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.setFontSize(20);
+    doc.setTextColor(255, 107, 53);
+    doc.text(recipe.title, 14, 22);
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text('Liste de courses generee le ' + new Date().toLocaleDateString('fr-FR'), 14, 30);
+    doc.text('Difficulte: ' + recipe.difficulty + ' | Temps: ' + recipe.time, 14, 36);
+    doc.setFontSize(14);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont(undefined, 'bold');
+    doc.text('Ingredients:', 14, 48);
+    doc.setFont(undefined, 'normal');
+    let y = 56;
+    for (const ing of recipe.ingredients) {
+      const ingredientData = allIngredients.find(i => i.id === ing.id);
+      const name = ingredientData ? ingredientData.name : ing.id;
+      doc.text('* ' + ing.amount + ' ' + (ingredientData?.unit || '') + ' ' + name, 18, y);
+      y += 7;
+    }
+    y += 10;
+    doc.setFont(undefined, 'bold');
+    doc.text('Instructions:', 14, y);
+    doc.setFont(undefined, 'normal');
+    y += 7;
+    for (let idx = 0; idx < recipe.instructions.length; idx++) {
+      const lines = doc.splitTextToSize((idx + 1) + '. ' + recipe.instructions[idx], 180);
+      for (const line of lines) {
+        if (y > 270) { doc.addPage(); y = 20; }
+        doc.text(line, 14, y);
+        y += 7;
+      }
+    }
+    const fileName = 'courses-' + recipe.title.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase() + '.pdf';
+    doc.save(fileName);
+  };
+
+  // Recettes filtrées par catégorie + favoris
+  const filteredRecipes = recipes.filter(r => {
+    if (showFavoritesOnly && !favorites.includes(r.id)) return false;
+    if (recipeFilter !== 'all' && r.category !== recipeFilter) return false;
+    return true;
+  });
+
+  // Liste des catégories uniques de recettes
+  const recipeCategories = ['all', ...new Set(recipes.map(r => r.category))];
 
   const allIngredients = [...ingredients, ...customIngredients];
 
@@ -233,6 +322,14 @@ function App() {
           transition={{ duration: 0.8 }}
           style={{ position: 'relative' }}
         >
+          <button
+            className="theme-toggle"
+            onClick={() => setDarkMode(!darkMode)}
+            title={darkMode ? "Mode clair" : "Mode sombre"}
+            aria-label={darkMode ? "Activer le mode clair" : "Activer le mode sombre"}
+          >
+            {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+          </button>
           <button 
             onClick={() => setShowHelp(true)}
             style={{ 
@@ -402,10 +499,41 @@ function App() {
             </div>
           </div>
 
-          {matchingRecipes.length > 0 ? (
+          {/* Filtres V2 : catégorie + favoris */}
+          <div className="recipe-filters" role="group" aria-label="Filtres des recettes">
+            <button
+              className={'filter-chip' + (showFavoritesOnly ? ' active' : '')}
+              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+              aria-pressed={showFavoritesOnly}
+              title="Voir mes recettes favorites"
+            >
+              <Heart size={14} style={{ display: 'inline', marginRight: 4, fill: showFavoritesOnly ? '#FF6B35' : 'transparent' }} />
+              {favorites.length} favoris
+            </button>
+            {recipeCategories.map(cat => (
+              <button
+                key={cat}
+                className={'filter-chip' + (recipeFilter === cat ? ' active' : '')}
+                onClick={() => setRecipeFilter(cat)}
+                aria-pressed={recipeFilter === cat}
+              >
+                {cat === 'all' ? 'Toutes' : cat}
+              </button>
+            ))}
+          </div>
+
+          {matchingRecipes.filter(r => {
+            if (showFavoritesOnly && !favorites.includes(r.id)) return false;
+            if (recipeFilter !== 'all' && r.category !== recipeFilter) return false;
+            return true;
+          }).length > 0 ? (
             <div className="recipe-grid">
               <AnimatePresence>
-                {matchingRecipes.map((recipe) => (
+                {matchingRecipes.filter(r => {
+                  if (showFavoritesOnly && !favorites.includes(r.id)) return false;
+                  if (recipeFilter !== 'all' && r.category !== recipeFilter) return false;
+                  return true;
+                }).map((recipe) => (
                   <motion.div
                     layout
                     key={recipe.id}
@@ -417,6 +545,17 @@ function App() {
                     onClick={() => setSelectedRecipe(recipe)}
                   >
                     <img src={recipe.image} alt={recipe.title} className="recipe-image" />
+                    <button
+                      className={'fav-btn' + (favorites.includes(recipe.id) ? ' favorited' : '')}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleFavorite(recipe.id);
+                      }}
+                      title={favorites.includes(recipe.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                      aria-label={favorites.includes(recipe.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                    >
+                      <Heart size={18} />
+                    </button>
                     <div className="recipe-content">
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <span className="recipe-tag">{recipe.difficulty}</span>
@@ -520,6 +659,29 @@ function App() {
                     <p style={{ fontStyle: 'italic', color: '#6366f1' }}>✨ Cette recette a été générée spécialement pour vous avec vos ingrédients !</p>
                   </div>
                 )}
+
+                {/* Actions V2 : Favori + Export PDF */}
+                <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                  <button
+                    className={'pdf-btn' + (favorites.includes(selectedRecipe.id) ? ' favorited' : '')}
+                    onClick={() => toggleFavorite(selectedRecipe.id)}
+                    style={favorites.includes(selectedRecipe.id) ? { background: 'linear-gradient(135deg, #FFD700, #FFA500)' } : {}}
+                    title={favorites.includes(selectedRecipe.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                    aria-label={favorites.includes(selectedRecipe.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                  >
+                    <Heart size={16} style={{ fill: favorites.includes(selectedRecipe.id) ? '#fff' : 'transparent' }} />
+                    {favorites.includes(selectedRecipe.id) ? 'En favori' : 'Ajouter aux favoris'}
+                  </button>
+                  <button
+                    className="pdf-btn"
+                    onClick={() => exportShoppingListToPDF(selectedRecipe)}
+                    title="Exporter la liste de courses en PDF"
+                    aria-label="Exporter la liste de courses en PDF"
+                  >
+                    <FileText size={16} />
+                    Exporter la liste en PDF
+                  </button>
+                </div>
               </div>
             </motion.div>
           </motion.div>
